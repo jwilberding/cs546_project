@@ -85,12 +85,12 @@ validate (Username, Password) ->
     end.
 
 get_gibes (Username) ->
-    do (qlc:sort (qlc:q ([{Gibe#gibes.date, Gibe#gibes.gibe} || Gibe <- mnesia:table (gibes), string:equal(Gibe#gibes.username, Username)]))).                         
+    do (qlc:sort (qlc:q ([{Gibe#gibes.key, Gibe#gibes.date, Gibe#gibes.gibe} || Gibe <- mnesia:table (gibes), string:equal(Gibe#gibes.username, Username)]))).                         
 
 get_all_gibes (Username) ->
-    QH1 = qlc:q ([{Gibe#gibes.username, Gibe#gibes.date, Gibe#gibes.gibe} || Gibe <- mnesia:table (gibes)]), 
+    QH1 = qlc:q ([{Gibe#gibes.key, Gibe#gibes.username, Gibe#gibes.date, Gibe#gibes.gibe} || Gibe <- mnesia:table (gibes)]), 
     QH2 = qlc:q ([hd(Following#following.followee) || Following <- mnesia:table (following), string:equal(Following#following.username, Username)]),
-    do (qlc:sort (qlc:q ([{U, D, G} || {U, D, G} <- QH1,  Followee <- QH2, ((Followee=:=U) or (U == Username))]))). 
+    do (qlc:sort (qlc:q ([{K, U, D, G} || {K, U, D, G} <- QH1,  Followee <- QH2, ((Followee=:=U) or (U == Username))]))). 
 
 %%% Checks the database to see if a username is already registered
 is_username_used (Username) ->    

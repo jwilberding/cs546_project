@@ -14,24 +14,28 @@ main () ->
             ok
     end, 
 
-    Username = wf:q (user),
+    Username = hd(wf:q (username)),
 
     Template = #template {file="main_template", title="User Page",
                           section1 = #panel { style="margin: 50px;", 
                                               body=[
                                                     #file { file=Header },
-                                                    #button { id=follow, text="Follow", postback={follow, Username} },
-                                                    User ++ " Gibes:",
+                                                    #button { id=follow, text="Follow", postback={follow, Username, User} },
+                                                    #flash { id=flash },
                                                     #br{},
-                                                    #flash { id=gibes },
+                                                    Username ++ " gibes:",
+                                                    #br{},
+                                                    #panel { id=gibes },
                                                     #panel { id=test }
                                                    ]}},
 
-    update_gibes(User),
+    update_gibes(Username),
     
     wf:render(Template).
 
-event ({follow, User}) ->
+event ({follow, User, _}) ->     
+    wf:flash ("Sorry, you aren't signed in.");
+event ({follow, User}) ->     
     db_backend:add_followee (wf:user(), User);   
 
 event (_) ->
@@ -39,12 +43,12 @@ event (_) ->
 
 update_gibes (User) ->
     Gibes = db_backend:get_gibes (User),
-    lists:map (fun ({Date, Gibe}) -> wf:insert_top (gibes, create_gibe_element(Gibe)) end, Gibes).
+    lists:map (fun ({_Key, Date, Gibe}) -> wf:insert_top (gibes, create_gibe_element(User, Date, Gibe)) end, Gibes).
     
-create_gibe_element (Gibe) ->
+create_gibe_element (Username, Date, Gibe) ->
     FlashID = wf:temp_id(),
-    InnerPanel = #panel { actions=#effect_blinddown 
+    InnerPanel = #panel { class=flash, actions=#effect_blinddown 
                           { target=FlashID, duration=0.4 }, 
                           body=[
-                                #panel { class=flash_content, body=#label{ text=Gibe }}]},
+                                #panel { class=flash_content, body=[ Gibe, #br{}, "from: ", Username, " on " ]}]},
     [#panel { id=FlashID, style="display: none;", body=InnerPanel }].
