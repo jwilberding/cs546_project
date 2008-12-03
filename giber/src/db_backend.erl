@@ -1,6 +1,6 @@
 -module (db_backend).
 -include ("wf.inc").
--export ([init/0, start/0, stop/0, validate/2, add_user/3, add_gibe/2, add_followee/2, get_gibes/1, get_all_gibes/1,  is_username_used/1]).
+-export ([init/0, start/0, stop/0, validate/2, add_user/3, add_gibe/2, add_followee/2, get_gibes/1, get_all_gibes/1, is_username_used/1, do/1]).
 
 -include_lib ("stdlib/include/qlc.hrl").
 
@@ -88,9 +88,9 @@ get_gibes (Username) ->
     do (qlc:sort (qlc:q ([{Gibe#gibes.date, Gibe#gibes.gibe} || Gibe <- mnesia:table (gibes), string:equal(Gibe#gibes.username, Username)]))).                         
 
 get_all_gibes (Username) ->
-    QH1 = qlc:q ([{Gibe#gibes.username, Gibe#gibes.date, Gibe#gibes.gibe} || Gibe <- mnesia:table (gibes), string:equal(Gibe#gibes.username, Username)]),
-    QH2 = qlc:q ([Following#following.followee || Following <- mnesia:table (following), string:equal(Following#following.username, Username)]),
-    do (qlc:sort (qlc:q ([{U, D, G} || {U, D, G} <- QH1,  Followee <- QH2, U =:= Followee]))).
+    QH1 = qlc:q ([{Gibe#gibes.username, Gibe#gibes.date, Gibe#gibes.gibe} || Gibe <- mnesia:table (gibes)]), 
+    QH2 = qlc:q ([hd(Following#following.followee) || Following <- mnesia:table (following), string:equal(Following#following.username, Username)]),
+    do (qlc:sort (qlc:q ([{U, D, G} || {U, D, G} <- QH1,  Followee <- QH2, ((Followee=:=U) or (U == Username))]))). 
 
 %%% Checks the database to see if a username is already registered
 is_username_used (Username) ->    

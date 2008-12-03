@@ -17,10 +17,11 @@ main () ->
     Template = #template {file="main_template", title="Your Page",
                           section1 = #panel { style="margin: 50px;", 
                                               body=[
-                                                    #file { file=Header },                         
-                                                    User ++ " Gibes:",
+                                                    #file { file=Header }, 
                                                     #textarea { id=input },
                                                     #button { id=add, text="Post", postback={add, User} },
+                                                    #br{},
+                                                    User ++ " Gibes:",                                                    
                                                     #br{},
                                                     #flash { id=gibes },
                                                     #panel { id=test }
@@ -38,8 +39,8 @@ event (_) ->
     ok.
 
 update_gibes (User) ->
-    Gibes = db_backend:get_gibes (User),
-    lists:map (fun ({Date, Gibe}) -> wf:insert_top (gibes, create_gibe_element(Gibe)) end, Gibes).
+    Gibes = db_backend:get_all_gibes (User),
+    lists:map (fun ({Username, Date, Gibe}) -> wf:insert_top (gibes, create_gibe_element(Gibe)) end, Gibes).
     
 create_gibe_element (Gibe) ->
     FlashID = wf:temp_id(),
