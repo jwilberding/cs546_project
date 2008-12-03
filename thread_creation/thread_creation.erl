@@ -2,7 +2,12 @@
 -export ([start/0, run/0]).
 
 start () ->
-    create_threads (10000).
+    {StartMega, StartSec, StartMicro} = now(),
+    create_threads (10000),
+    {EndMega, EndSec, EndMicro} = now(),
+    Time = (EndMega * 1000000000000   + EndSec * 1000000   + EndMicro) -
+        (StartMega * 1000000000000 + StartSec * 1000000 + StartMicro),    
+    io:format("Time in microseconds:  ~p~n", [Time]).
 
 create_threads (0) ->
     ok;

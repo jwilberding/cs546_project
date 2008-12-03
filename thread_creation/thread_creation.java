@@ -14,7 +14,8 @@ public class thread_creation implements Runnable
    public void run()
    {
       try {
-        // nothing
+        int i=0;
+        i++;
       } catch (Throwable t) { }
    }
 }
