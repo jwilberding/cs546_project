@@ -53,14 +53,15 @@ npforeach_f(Parent, F, I) ->
   Parent ! Parent.
 
 start() ->
-  timer:start(),
-  F = fun(I) -> math:pow(I,I) end,
-  {T0,L} = timer:tc(lists,seq,[1,10000]),
-  io:format("seq took ~w microseconds~n",[T0]),
-  {T1,_V2} = timer:tc(plists,pmap,[F,L]),
-  io:format("pmap took ~w microseconds~n",[T1]),
-  {T2,_V1} = timer:tc(plists,pforeach,[F,L]),
-  io:format("pforeach took ~w microseconds~n",[T2]),
-  {T3,_V1} = timer:tc(plists,npforeach,[F,L]),
-  io:format("npforeach took ~w microseconds~n",[T3]),
-  ok.
+    timer:start(),
+    %F = fun(I) -> math:pow(I,I) end,
+    {T0,L} = timer:tc(lists,seq,[1,8]),
+    {T5,_} = timer:tc(lists,map,[F,L]),
+    io:format("seq took ~w microseconds~n",[T5]),
+    {T1,_V2} = timer:tc(plists,pmap,[F,L]),
+    io:format("pmap took ~w microseconds~n",[T1]),
+    {T2,_V1} = timer:tc(plists,pforeach,[F,L]),
+    io:format("pforeach took ~w microseconds~n",[T2]),
+    {T3,_V1} = timer:tc(plists,npforeach,[F,L]),
+    io:format("npforeach took ~w microseconds~n",[T3]),
+    ok.

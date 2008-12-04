@@ -1,9 +1,9 @@
 -module (thread_creation).
--export ([start/0, run/0]).
+-export ([start/1, run/0]).
 
-start () ->
+start (X) ->
     {StartMega, StartSec, StartMicro} = now(),
-    create_threads (10000),
+    create_threads (X),
     {EndMega, EndSec, EndMicro} = now(),
     Time = (EndMega * 1000000000000   + EndSec * 1000000   + EndMicro) -
         (StartMega * 1000000000000 + StartSec * 1000000 + StartMicro),    
