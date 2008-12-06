@@ -24,7 +24,7 @@ main () ->
                                                     #br{},
                                                     Username ++ " gibes:",
                                                     #br{},
-                                                    #panel { id=gibes },       
+                                                    #panel { id=gibes }
                                                    ]}},
 
     gibe_element:update_gibes(Username),

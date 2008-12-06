@@ -1,6 +1,6 @@
 -module (gibe_element).
 -include ("wf.inc").
--export ([update_gibes/1]).
+-export ([update_gibes/1, create_gibe_element/3]).
 
 update_gibes (User) ->
     Gibes = db_backend:get_all_gibes (User),

@@ -22,7 +22,7 @@ main () ->
                                                     #br{},
                                                     "Gibes:",                                                    
                                                     #br{},
-                                                    #flash { id=gibes },
+                                                    #flash { id=gibes }
                                                    ]}},
 
     wf:wire(add, input, #validate { attach_to=input, validators=[#custom { text="Too long. Max=140 chars.", function=(fun (X, Y) -> check_length (X, Y) end) }] }),
@@ -34,9 +34,9 @@ main () ->
 
 event ({add, User}) ->
     db_backend:add_gibe (User, wf:q(input)),
-    {{Y, M, D}, {Hour, Min, Sec}} = erlang:local_time(),
+    {{Y, M, D}, {Hour, Min, Sec}} = calendar:local_time(),
     Date = io_lib:format("~w~s~w~s~w~s~w~s~w~s~w", [M, "-", D, "-", Y, " at ", Hour, ":", Min, ":", Sec]),
-    wf:insert_top (gibes, gibe_element:create_gibe_element (User,Date, wf:q(input)));
+    wf:insert_top (gibes, gibe_element:create_gibe_element(User,Date, hd(wf:q(input))));
 
 event (_) ->
     ok.
