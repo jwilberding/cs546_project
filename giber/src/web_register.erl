@@ -3,29 +3,43 @@
 -export ([main/0, event/1]).
 
 main() ->
-    Body = #body { body=#panel { style="margin: 50px;", 
-                                 body=["Register:",
-                                       #br{},
-                                       "Username: ",
-                                       #textbox { id=username },
-                                       #br{},
-                                       "Email Address: ",
-                                       #textbox { id=email_address },
-                                       #br{},
-                                       "Password: ",
-                                       #password { id=pass },
-                                       #br{},       
-                                       "Retype Password: ",
-                                       #password { id=pass2 },
-                                       #br{},              
-                                       #button { id=submit, text="Register", postback=register },
-                                       #br{},
-                                       "Already Register? ",
-                                       #link { text="Login Here", url="login" },
-                                       #br{},
-                                       #flash { id=flash },
-                                       #panel { id=test }
-                                      ]}},
+    User = wf:user(),
+
+    case User of        
+        undefined ->
+            Header = "new_user_header";
+        _ ->
+            Header = "user_header",
+            ok
+    end, 
+ 
+    Template = #template {file="main_template", title="Register",
+                          section1 = #panel { style="margin: 50px;", 
+                                              body=[
+                                                    #file { file=Header },
+                                                    #br{}, #br{},
+                                                    "Register:",
+                                                    #br{},
+                                                    "Username: ",
+                                                    #textbox { id=username },
+                                                    #br{},
+                                                    "Email Address: ",
+                                                    #textbox { id=email_address },
+                                                    #br{},
+                                                    "Password: ",
+                                                    #password { id=pass },
+                                                    #br{},       
+                                                    "Retype Password: ",
+                                                    #password { id=pass2 },
+                                                    #br{},              
+                                                    #button { id=submit, text="Register", postback=register },
+                                                    #br{},
+                                                    "Already Register? ",
+                                                    #link { text="Login Here", url="login" },
+                                                    #br{},
+                                                    #flash { id=flash },
+                                                    #panel { id=test }
+                                                   ]}},
 
     wf:wire(submit, username, #validate { attach_to=username, validators=[#is_required { text="Required." }] }),
     wf:wire(submit, username, #validate { attach_to=username, validators=[#custom { text="Username already registered.", function=(fun (X, Y) -> is_username_used (X, Y) end) }] }),
@@ -36,7 +50,7 @@ main() ->
     wf:wire(submit, pass, #validate { attach_to=pass2, validators=[#confirm_password { text="Error: Passwords do not match", password=pass2 }] }),
     wf:wire(submit, pass, #validate { attach_to=pass, validators=[#min_length { text="Error: Passwords must be at least 8 characters.", length=8 }] }),
     
-    wf:render(Body).
+    wf:render(Template).
 
 event (register) ->
     case db_backend:add_user (hd(wf:q(username)), hd(wf:q(email_address)), hd(wf:q(pass))) of

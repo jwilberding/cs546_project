@@ -1,6 +1,6 @@
 -module (db_backend).
 -include ("wf.inc").
--export ([init/0, start/0, stop/0, validate/2, add_user/3, add_gibe/2, add_followee/2, get_gibes/1, get_all_gibes/1, is_username_used/1, do/1]).
+-export ([init/0, start/0, stop/0, validate/2, add_user/3, add_gibe/2, add_followee/2, get_gibes/1, get_all_gibes/1, is_username_used/1, find_users/1, do/1]).
 
 -include_lib ("stdlib/include/qlc.hrl").
 
@@ -48,13 +48,19 @@ add_gibe (Username, Gibe) ->
         fail ->
             not_valid;
         [] ->
-            write (#gibes{key=0, username=Username, date=calendar:local_time(), gibe=Gibe}),
-            write (#sequence{count=0});
+            F = fun () ->
+                        mnesia:write (#gibes{key=0, username=Username, date=calendar:local_time(), gibe=Gibe}),
+                        mnesia:write (#sequence{count=0})
+                end,
+            mnesia:transaction (F);
         [Seq] ->        
-            Count = Seq#sequence.count,
-            write (#gibes{key=(Count+1), username=Username, date=calendar:local_time(), gibe=Gibe}),
-            write (#sequence{count=(Count+1)}),
-            delete (sequence, Count)            
+            F = fun () ->
+                        Count = Seq#sequence.count,
+                        mnesia:write (#gibes{key=(Count+1), username=Username, date=calendar:local_time(), gibe=Gibe}),
+                        mnesia:write (#sequence{count=(Count+1)}),
+                        delete (sequence, Count)         
+                end,
+            mnesia:transaction(F)
     end.   
 
 add_followee (Username, Followee) ->
@@ -63,7 +69,7 @@ add_followee (Username, Followee) ->
 %%% Return true if the Username or EmailAddress match the Input
 check (Username, EmailAddress, Input) ->
     if 
-        Username == Input ; EmailAddress == Input ->
+        Username =:= Input ; EmailAddress =:= Input ->
             true;
         true ->
             false
@@ -72,12 +78,12 @@ check (Username, EmailAddress, Input) ->
 %%% Return valid if the Username and Password match, not_valid otherwise
 validate (Username, Password) ->
     <<PasswordDigest:160>> = crypto:sha(Password),
-    case do (qlc:q ([X#users.username || X <- mnesia:table(users), check (X#users.username, X#users.email_address, Username), X#users.password == PasswordDigest])) of
+    case do (qlc:q ([X#users.username || X <- mnesia:table(users), check (X#users.username, X#users.email_address, Username), X#users.password =:= PasswordDigest])) of
         fail ->
             not_valid;
         Results ->        
             if 
-                length (Results) == 1 ->
+                length (Results) =:= 1 ->
                     {valid, hd(Results)};
                 true ->
                     not_valid
@@ -88,9 +94,10 @@ get_gibes (Username) ->
     do (qlc:sort (qlc:q ([{Gibe#gibes.key, Gibe#gibes.date, Gibe#gibes.gibe} || Gibe <- mnesia:table (gibes), string:equal(Gibe#gibes.username, Username)]))).                         
 
 get_all_gibes (Username) ->
-    QH1 = qlc:q ([{Gibe#gibes.key, Gibe#gibes.username, Gibe#gibes.date, Gibe#gibes.gibe} || Gibe <- mnesia:table (gibes)]), 
-    QH2 = qlc:q ([hd(Following#following.followee) || Following <- mnesia:table (following), string:equal(Following#following.username, Username)]),
-    do (qlc:sort (qlc:q ([{K, U, D, G} || {K, U, D, G} <- QH1,  Followee <- QH2, ((Followee=:=U) or (U == Username))]))). 
+    QH1 = qlc:q ([Gibe || Gibe <- mnesia:table (gibes)]), 
+    QH2 = qlc:q ([Following || Following <- mnesia:table (following), string:equal(Following#following.username, Username)]),
+    do (qlc:sort (qlc:append(qlc:q ([{Gibe#gibes.key, Gibe#gibes.username, Gibe#gibes.date, Gibe#gibes.gibe} || Gibe <- QH1, Followee <- QH2, Followee#following.followee =:= Gibe#gibes.username]), 
+                                    qlc:q([{Gibe#gibes.key, Gibe#gibes.username, Gibe#gibes.date, Gibe#gibes.gibe} || Gibe <- QH1, string:equal(Gibe#gibes.username, Username)])))).
 
 %%% Checks the database to see if a username is already registered
 is_username_used (Username) ->    
@@ -99,11 +106,19 @@ is_username_used (Username) ->
             false;
         Results ->        
             if 
-                length (Results) == 1 ->
+                length (Results) =:= 1 ->
                     false;
                 true ->
                     true
             end
+    end.
+
+find_users (Search) ->
+    case do (qlc:q ([X#users.username || X <- mnesia:table(users), string:equal(X#users.username, Search)])) of
+        aborted ->
+            [];
+        Results ->        
+            Results
     end.
 
 %%% Run Query Q

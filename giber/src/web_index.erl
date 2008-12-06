@@ -10,11 +10,12 @@ main () ->
             Header = "user_header"
     end,
 
-    Template = #template {file="post_template", title="Beer Enthusiasts",
+    Template = #template {file="post_template", title="Giber",
                           section1 = #panel { style="margin: 50px;", 
                                              body=[
                                                    #file { file=Header },
-                                                   #br{}
+                                                   #br{}, #br{},
+                                                   "<input type=\"text\" name=\"name\">"
                                                   ]}},
     
     wf:render (Template).
